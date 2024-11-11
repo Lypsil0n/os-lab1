@@ -29,6 +29,7 @@ int main(int argc, char **argv)
         {
             for (i = 0; i < niterations; ++i)
                 printf("C = %d, ", i);
+            
                 printf("In child => Own pid : %d\n", getpid());
                 printf("In child => Parent's pid : %d\n", pid);
             printf("Child 1: %d\n", pid);
