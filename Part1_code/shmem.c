@@ -10,7 +10,7 @@
 int main(int argc, char **argv)
 {
 	struct shm_struct {
-		int buffer;
+		int buffer[10];
 		unsigned empty;
 	};
 	volatile struct shm_struct *shmp = NULL;
@@ -28,10 +28,12 @@ int main(int argc, char **argv)
 		/* here's the parent, acting as producer */
 		while (var1 < 100) {
 			/* write to shmem */
-			var1++;
 			while (shmp->empty == 1); /* busy wait until the buffer is empty */
-			printf("Sending %d\n", var1); fflush(stdout);
-			shmp->buffer = var1;
+			for(int i = 0; i < 10; i++){
+				var1++;
+				printf("Sending %d\n", var1); fflush(stdout);
+				shmp->buffer[i] = var1;
+			}
 			shmp->empty = 1;
 		}
 		shmdt(addr);
@@ -41,9 +43,11 @@ int main(int argc, char **argv)
 		while (var2 < 100) {
 			/* read from shmem */
 			while (shmp->empty == 0); /* busy wait until there is something */
-			var2 = shmp->buffer;
-			shmp->empty = 0;
+			for(int i = 0; i < 10; i++){
+			var2 = shmp->buffer[i];
 			printf("Received %d\n", var2); fflush(stdout);
+			}
+			shmp->empty = 0;
 		}
 		shmdt(addr);
 		shmctl(shmid, IPC_RMID, shm_buf);
