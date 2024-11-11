@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 			var2 = shmp->buffer[i];
 			printf("Received %d\n", var2); fflush(stdout);
 			}
-			shmp->empty = 0;
+			shmp->empty = 0; //test
 		}
 		shmdt(addr);
 		shmctl(shmid, IPC_RMID, shm_buf);
