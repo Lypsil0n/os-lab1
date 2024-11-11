@@ -3,6 +3,8 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <stdlib.h>
+#include <time.h>
 #define SHMSIZE 128
 #define SHM_R 0400
 #define SHM_W 0200
@@ -18,6 +20,8 @@ int main(int argc, char **argv)
 	pid_t pid = -1;
 	int var1 = 0, var2 = 0, shmid = -1;
 	struct shmid_ds *shm_buf;
+	srand(time(NULL));
+	int delay;
 
 	/* allocate a chunk of shared memory */
 	shmid = shmget(IPC_PRIVATE, SHMSIZE, IPC_CREAT | SHM_R | SHM_W);
@@ -30,6 +34,8 @@ int main(int argc, char **argv)
 			/* write to shmem */
 			while (shmp->empty == 1); /* busy wait until the buffer is empty */
 			for(int i = 0; i < 10; i++){
+				delay = 100000 + rand() % 500000;
+				usleep(delay);
 				var1++;
 				printf("Sending %d\n", var1); fflush(stdout);
 				shmp->buffer[i] = var1;
@@ -44,8 +50,10 @@ int main(int argc, char **argv)
 			/* read from shmem */
 			while (shmp->empty == 0); /* busy wait until there is something */
 			for(int i = 0; i < 10; i++){
-			var2 = shmp->buffer[i];
-			printf("Received %d\n", var2); fflush(stdout);
+				delay = 20000 + rand() % 2000000;
+				usleep(delay);
+				var2 = shmp->buffer[i];
+				printf("Received %d\n", var2); fflush(stdout);
 			}
 			shmp->empty = 0; //test
 		}
