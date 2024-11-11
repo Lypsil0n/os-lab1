@@ -13,7 +13,8 @@ int main(int argc, char **argv)
 {
 	struct shm_struct {
 		int buffer[10];
-		unsigned empty;
+		int write_index;
+		int read_index;
 	};
 	volatile struct shm_struct *shmp = NULL;
 	char *addr = NULL;
@@ -26,21 +27,22 @@ int main(int argc, char **argv)
 	/* allocate a chunk of shared memory */
 	shmid = shmget(IPC_PRIVATE, SHMSIZE, IPC_CREAT | SHM_R | SHM_W);
 	shmp = (struct shm_struct *) shmat(shmid, addr, 0);
-	shmp->empty = 0;
+	shmp->write_index = 0;
+	shmp->read_index = 0;
 	pid = fork();
 	if (pid != 0) {
 		/* here's the parent, acting as producer */
 		while (var1 < 100) {
 			/* write to shmem */
-			while (shmp->empty == 1); /* busy wait until the buffer is empty */
+			while ((shmp->write_index + 1) % 10 == shmp->read_index); /* busy wait until the buffer is empty */
 			for(int i = 0; i < 10; i++){
 				delay = 100000 + rand() % 500000;
 				usleep(delay);
 				var1++;
 				printf("Sending %d\n", var1); fflush(stdout);
-				shmp->buffer[i] = var1;
+				shmp->buffer[shmp->write_index] = var1;
+				shmp->write_index = (shmp->write_index + 1) % 10;
 			}
-			shmp->empty = 1;
 		}
 		shmdt(addr);
 		shmctl(shmid, IPC_RMID, shm_buf);
@@ -48,14 +50,14 @@ int main(int argc, char **argv)
 		/* here's the child, acting as consumer */
 		while (var2 < 100) {
 			/* read from shmem */
-			while (shmp->empty == 0); /* busy wait until there is something */
+			while ((shmp->read_index + 1) % 10 == shmp->write_index); /* busy wait until there is something */
 			for(int i = 0; i < 10; i++){
 				delay = 20000 + rand() % 2000000;
 				usleep(delay);
-				var2 = shmp->buffer[i];
+				var2 = shmp->buffer[shmp->read_index];
+				shmp->read_index = (shmp->read_index + 1) % 10;
 				printf("Received %d\n", var2); fflush(stdout);
 			}
-			shmp->empty = 0; //test
 		}
 		shmdt(addr);
 		shmctl(shmid, IPC_RMID, shm_buf);
