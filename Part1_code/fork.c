@@ -34,6 +34,7 @@ int main(int argc, char **argv)
                 printf("In child => Parent's pid : %d\n", pid);
             printf("Child 1: %d\n", pid);
             printf("Child 2: %d\n", pid2);
+            //TEST
         }
     } 
 }
