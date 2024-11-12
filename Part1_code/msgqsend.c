@@ -5,11 +5,14 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <time.h>
+#include <limits.h>
+#include <unistd.h>
 
 #define PERMS 0644
 struct my_msgbuf {
    long mtype;
-   char mtext[200];
+   int mtext;
 };
 
 int main(void) {
@@ -31,17 +34,16 @@ int main(void) {
    printf("message queue: ready to send messages.\n");
    printf("Enter lines of text, ^D to quit:\n");
    buf.mtype = 1; /* we don't really care in this case */
-
-   while(fgets(buf.mtext, sizeof buf.mtext, stdin) != NULL) {
-      len = strlen(buf.mtext);
-      /* remove newline at end, if it exists */
-      if (buf.mtext[len-1] == '\n') buf.mtext[len-1] = '\0';
-      if (msgsnd(msqid, &buf, len+1, 0) == -1) /* +1 for '\0' */
+   sleep(10);
+   for(int i = 0; i < 50; i++) {
+      len = 4;
+      buf.mtext = rand() % ((INT_MAX - 1) - 1 + 1) + 1;
+      printf("%d\n", buf.mtext);
+      if (msgsnd(msqid, &buf, len, 0) == -1) /* +1 for '\0' */
          perror("msgsnd");
    }
-   strcpy(buf.mtext, "end");
-   len = strlen(buf.mtext);
-   if (msgsnd(msqid, &buf, len+1, 0) == -1) /* +1 for '\0' */
+   len = 4;
+   if (msgsnd(msqid, &buf, len, 0) == -1) /* +1 for '\0' */
       perror("msgsnd");
 
    if (msgctl(msqid, IPC_RMID, NULL) == -1) {

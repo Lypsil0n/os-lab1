@@ -1,3 +1,5 @@
-Part1_code/shmem
-Part1_code/fork
-Part1_code/semaphore
+# Ignore all files
+*
+
+# Allow only .c files
+!*.c
