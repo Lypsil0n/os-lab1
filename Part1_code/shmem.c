@@ -11,16 +11,13 @@
 #define SHM_R 0400
 #define SHM_W 0200
 
-const char *sender_name = "sender";
-const char *reciever_name = "reciever";
+const char *semName1 = "my_sema1";
+const char *semName2 = "my_sema2";
 
 int main(int argc, char **argv)
 {
-	sem_t *sem_sender = sem_open(sender_name, O_CREAT, O_RDWR, 1);
-	    if (sem_sender == SEM_FAILED) {
-        printf("ojojoj :(");
-    }
-	sem_t *sem_reciever = sem_open(reciever_name, O_CREAT, O_RDWR, 0);
+	sem_t *sem_id1 = sem_open(semName1, O_CREAT, O_RDWR, 1);
+	sem_t *sem_id2 = sem_open(semName2, O_CREAT, O_RDWR, 0);
 	int status;
 	struct shm_struct {
 		int buffer[10];
@@ -47,21 +44,21 @@ int main(int argc, char **argv)
 			/* write to shmem */
 			 /* busy wait until the buffer is empty */
 			for(int i = 0; i < 10; i++){
-				sem_wait(sem_sender);
+				sem_wait(sem_id1);
 				delay = 100000 + rand() % 500000;
 				usleep(delay);
 				var1++;
 				printf("Sending %d\n", var1); fflush(stdout);
 				shmp->buffer[shmp->write_index] = var1;
 				shmp->write_index = (shmp->write_index + 1) % 10;
-				sem_post(sem_reciever);
+				sem_post(sem_id2);
 			}
 		}
-		sem_close(sem_sender);
-		sem_close(sem_reciever);
-		wait(&status);
-		sem_unlink(sender_name);
-		sem_unlink(reciever_name);
+		sem_close(sem_id1);
+		sem_close(sem_id2);
+		wait(status);
+		sem_unlink(semName1);
+		sem_unlink(semName2);
 		shmdt(addr);
 		shmctl(shmid, IPC_RMID, shm_buf);
 	} else {
@@ -69,17 +66,17 @@ int main(int argc, char **argv)
 		while (var2 < 100) {
 			/* read from shmem */ /* busy wait until there is something */
 			for(int i = 0; i < 10; i++){
-				sem_wait(sem_reciever);
+				sem_wait(sem_id2);
 				delay = 20000 + rand() % 2000000;
 				usleep(delay);
 				var2 = shmp->buffer[shmp->read_index];
 				shmp->read_index = (shmp->read_index + 1) % 10;
 				printf("Received %d\n", var2); fflush(stdout);
-				sem_post(sem_sender);
+				sem_post(sem_id1);
 			}
 		}
-		sem_close(sem_sender);
-		sem_close(sem_reciever);
+		sem_close(sem_id1);
+		sem_close(sem_id2);
 		shmdt(addr);
 		shmctl(shmid, IPC_RMID, shm_buf);
 	}
