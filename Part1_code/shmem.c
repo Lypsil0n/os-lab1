@@ -16,8 +16,13 @@ const char *semName2 = "my_sema2";
 
 int main(int argc, char **argv)
 {
+<<<<<<< HEAD
 	sem_t *sem_id1 = sem_open(semName1, O_CREAT, O_RDWR, 1);
 	sem_t *sem_id2 = sem_open(semName2, O_CREAT, O_RDWR, 0);
+=======
+	sem_t *sem_sender = sem_open(sender_name, O_CREAT, O_RDWR, 1);
+	sem_t *sem_reciever = sem_open(reciever_name, O_CREAT, O_RDWR, 0);
+>>>>>>> a50eea4842b5164eac50c4343cc25b8c39e3a4a0
 	int status;
 	struct shm_struct {
 		int buffer[10];
