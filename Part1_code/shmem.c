@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 		while (var1 < 100) {
 			/* write to shmem */
 			 /* busy wait until the buffer is empty */
-			for(int i = 0; i < 10; i++){
+			for(int i = 0; i < 100; i++){
 				sem_wait(sem_id1);
 				delay = 100000 + rand() % 500000;
 				usleep(delay);
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 		/* here's the child, acting as consumer */
 		while (var2 < 100) {
 			/* read from shmem */ /* busy wait until there is something */
-			for(int i = 0; i < 10; i++){
+			for(int i = 0; i < 100; i++){
 				sem_wait(sem_id2);
 				delay = 20000 + rand() % 2000000;
 				usleep(delay);
