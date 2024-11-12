@@ -17,9 +17,6 @@ const char *reciever_name = "reciever";
 int main(int argc, char **argv)
 {
 	sem_t *sem_sender = sem_open(sender_name, O_CREAT, O_RDWR, 1);
-	    if (sem_sender == SEM_FAILED) {
-        printf("ojojoj :(");
-    }
 	sem_t *sem_reciever = sem_open(reciever_name, O_CREAT, O_RDWR, 0);
 	int status;
 	struct shm_struct {
