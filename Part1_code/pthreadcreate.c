@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
 		NULL,  // its attributes
 		child, // the function it should run
 		NULL); // args to that function
-
+	
 	printf("This is the parent (main) thread.\n");
 	pthread_join(thread, NULL); // wait for child to finish
 	return 0;
