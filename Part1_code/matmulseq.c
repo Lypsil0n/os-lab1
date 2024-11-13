@@ -13,28 +13,22 @@
 static double a[SIZE][SIZE];
 static double b[SIZE][SIZE];
 static double c[SIZE][SIZE];
-static pthread_t calc_threads[SIZE];
-static pthread_t init_threads[SIZE];
-
-
-static void* init_rows(void* arg){
-    int i = arg;
-    for (int j = 0; j < SIZE; j++) {
-        a[i][j] = 1.0;
-        b[i][j] = 1.0;
-    }
-}
+static pthread_t threads[SIZE];
 
 static void
 init_matrix(void)
 {
-    int i;
-    for (i = 0; i < SIZE; i++)  {
-        pthread_create(&init_threads[i], NULL, init_rows, (void*)i);
-    }
-    for (i = 0; i < SIZE; i++) {
-        pthread_join(init_threads[i], NULL);
-    }
+    int i, j;
+
+    for (i = 0; i < SIZE; i++)
+        for (j = 0; j < SIZE; j++) {
+	        /* Simple initialization, which enables us to easy check
+	         * the correct answer. Each element in c will have the same
+	         * value as SIZE after the matmul operation.
+	         */
+	        a[i][j] = 1.0;
+	        b[i][j] = 1.0;
+        }
 }
 
 
@@ -53,7 +47,7 @@ matmul_seq()
 {
     int i;
     for (i = 0; i < SIZE; i++) {
-        pthread_create(&calc_threads[i], NULL, calc, (void*)i);
+        pthread_create(&threads[i], NULL, calc, (void*)i);
     }
 }
 
@@ -76,6 +70,6 @@ main(int argc, char **argv)
     matmul_seq();
     // print_matrix();
     for (int i = 0; i < SIZE; i++) {
-        pthread_join(calc_threads[i], NULL);
+        pthread_join(threads[i], NULL);
     }
 }
