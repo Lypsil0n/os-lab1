@@ -6,12 +6,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #define SIZE 1024
 
 static double a[SIZE][SIZE];
 static double b[SIZE][SIZE];
 static double c[SIZE][SIZE];
+static pthread_t threads[SIZE];
 
 static void
 init_matrix(void)
@@ -29,17 +31,23 @@ init_matrix(void)
         }
 }
 
+
+static void* calc(void* arg){
+    int i = arg;
+    int j, k;
+    for (j = 0; j < SIZE; j++) {
+        c[i][j] = 0.0;
+        for (k = 0; k < SIZE; k++)
+            c[i][j] = c[i][j] + a[i][k] * b[k][j];
+    }
+}
+
 static void
 matmul_seq()
 {
-    int i, j, k;
-
+    int i;
     for (i = 0; i < SIZE; i++) {
-        for (j = 0; j < SIZE; j++) {
-            c[i][j] = 0.0;
-            for (k = 0; k < SIZE; k++)
-                c[i][j] = c[i][j] + a[i][k] * b[k][j];
-        }
+        pthread_create(&threads[i], NULL, calc, (void*)i);
     }
 }
 
@@ -60,5 +68,8 @@ main(int argc, char **argv)
 {
     init_matrix();
     matmul_seq();
-    //print_matrix();
+    // print_matrix();
+    for (int i = 0; i < SIZE; i++) {
+        pthread_join(threads[i], NULL);
+    }
 }
