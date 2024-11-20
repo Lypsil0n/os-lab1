@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
     int page_size = atoi(argv[2]);
     char *filename = argv[3];
     struct trace *buffer = (struct trace*)malloc(no_physical_pages * sizeof(struct trace));
-    int *accesses = (int*)malloc(no_physical_pages * sizeof(int));
+    int *accesses = (int*)malloc(100000 * sizeof(int));
     int page_faults = 0;
     int current_row;
     unsigned int address;
@@ -83,6 +83,7 @@ int main(int argc, char** argv) {
     }
 
     free(buffer);
+    free(accesses);
 
     printf("No physical pages = %d, page size = %d\n", no_physical_pages, page_size);
     printf("Number of page faults: %d\n", page_faults);
