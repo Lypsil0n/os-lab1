@@ -2,22 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <math.h>
-
-struct trace{
-    int reference;
-    int next_hit;
-};
 
 int main(int argc, char** argv) {
     int no_physical_pages = atoi(argv[1]);
     int page_size = atoi(argv[2]);
     char *filename = argv[3];
-    struct trace *buffer = (struct trace*)malloc(no_physical_pages * sizeof(struct trace));
+    int *buffer = (int*)malloc(no_physical_pages * sizeof(int));
     int *accesses = (int*)malloc(100000 * sizeof(int));
     int page_faults = 0;
-    int current_row;
     unsigned int address;
+    int found;
+    int page;
+    int empty_pages = no_physical_pages;
 
     FILE *file = fopen(filename, "r");
 
@@ -27,66 +23,45 @@ int main(int argc, char** argv) {
     }
     fclose(file);
 
-    for (int i = 0; i < no_physical_pages; i++) {
-        buffer[i].reference = -1;
-        buffer[i].next_hit = -1;
-    }
 
-    for (current_row = 0; current_row < 100000; current_row++) {
-        int address = accesses[current_row];
-        int page = address / page_size;
-        int found = 0;
-
-        for(int i = 0; i < no_physical_pages; i++) {
-            if(buffer[i].reference == page) {
+    for (int current_row = 0; current_row < 100000; current_row++) {
+        page = accesses[current_row] / page_size;
+        found = 0;
+        
+        for(int i = 0; i < no_physical_pages; i++){
+            if(buffer[i] == page){
                 found = 1;
-            }
-        }
-
-        int set_next_hit = INT_MAX;
-        for(int i = current_row + 1; i < 100000; i++){
-            if((accesses[i] / page_size) == page){
-                set_next_hit = i;
                 break;
             }
         }
 
         if(!found){
             page_faults++;
-            int empty_slot_index;
-            int empty_slots = 0;
-
-            for(empty_slot_index = 0; empty_slot_index < no_physical_pages; empty_slot_index++) {
-                if(buffer[empty_slot_index].reference == -1) {
-                    empty_slots = 1;
-                    break;
-                }
-            }
-
-            if(empty_slots){
-                buffer[empty_slot_index].reference = page;
-                buffer[empty_slot_index].next_hit = set_next_hit;
+            int index = 0;
+            int furthest = 0;
+            if(empty_pages){
+                index = no_physical_pages - empty_pages;
+                empty_pages--;
             } else {
-                int furthest_index = 0;
-                int furthest_entry = 0;
-
-                for(int i = 0; i < no_physical_pages; i++){
-                    if(buffer[i].next_hit - current_row > furthest_entry){
-                        furthest_index = i;
-                        furthest_entry = buffer[i].next_hit;
+                for(int j = 0; j < no_physical_pages; j++){
+                    found = 0;
+                    for(int k = current_row + 1; k < 100000; k++){
+                        if (accesses[k] / page_size == buffer[j]) {
+                            found = 1;
+                            if(k > furthest){
+                                furthest = k;
+                                index = j;
+                            }
+                            break;
+                        }
+                    }
+                    if(!found){
+                        index = j;
+                        break;
                     }
                 }
-                
-                buffer[furthest_index].reference = page;
-                buffer[furthest_index].next_hit = set_next_hit;
             }
-        } else {
-            for(int i = 0; i < no_physical_pages; i++) {
-                if(buffer[i].reference == page) {
-                    buffer[i].next_hit = set_next_hit;
-                    break;
-                }
-            }
+            buffer[index] = page;
         }
     }
 
