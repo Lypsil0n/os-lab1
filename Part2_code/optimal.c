@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <math.h>
 
 struct trace{
     int reference;
@@ -32,12 +33,20 @@ int main(int argc, char** argv) {
     }
 
     for (current_row = 0; current_row < 100000; current_row++) {
-        int page = accesses[current_row] / page_size;
+        int address = accesses[current_row];
+        int page = address / page_size;
         int found = 0;
 
         for(int i = 0; i < no_physical_pages; i++) {
             if(buffer[i].reference == page) {
                 found = 1;
+            }
+        }
+
+        int set_next_hit = INT_MAX;
+        for(int i = current_row + 1; i < 100000; i++){
+            if((accesses[i] / page_size) == page){
+                set_next_hit = i;
                 break;
             }
         }
@@ -54,30 +63,29 @@ int main(int argc, char** argv) {
                 }
             }
 
-            int next_hit = INT_MAX;
-            for(int i = current_row + 1; i < 100000; i++){
-                if(accesses[i] / page_size == page){
-                    next_hit = i;
-                    break;
-                }
-            }
-
             if(empty_slots){
                 buffer[empty_slot_index].reference = page;
-                buffer[empty_slot_index].next_hit = next_hit;
+                buffer[empty_slot_index].next_hit = set_next_hit;
             } else {
                 int furthest_index = 0;
-                int furthest_entry = buffer[0].next_hit;
+                int furthest_entry = 0;
 
-                for(int i = 1; i < no_physical_pages; i++){
-                    if(buffer[i].next_hit > furthest_entry){
+                for(int i = 0; i < no_physical_pages; i++){
+                    if(buffer[i].next_hit - current_row > furthest_entry){
                         furthest_index = i;
                         furthest_entry = buffer[i].next_hit;
                     }
                 }
                 
                 buffer[furthest_index].reference = page;
-                buffer[furthest_index].next_hit = next_hit;
+                buffer[furthest_index].next_hit = set_next_hit;
+            }
+        } else {
+            for(int i = 0; i < no_physical_pages; i++) {
+                if(buffer[i].reference == page) {
+                    buffer[i].next_hit = set_next_hit;
+                    break;
+                }
             }
         }
     }
